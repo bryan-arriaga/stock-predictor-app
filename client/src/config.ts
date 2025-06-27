@@ -2,7 +2,7 @@
 const isProduction = window.location.hostname !== 'localhost';
 
 export const API_BASE_URL = isProduction 
-  ? 'https://your-actual-backend-url.vercel.app'  // Replace with your real backend URL
+  ? 'https://stock-predictor-backend-hazel.vercel.app'  // Your deployed backend
   : 'http://localhost:5000';
 
 export const API_ENDPOINTS = {
