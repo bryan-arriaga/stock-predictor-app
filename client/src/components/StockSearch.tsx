@@ -22,12 +22,14 @@ const StockSearch: React.FC<StockSearchProps> = ({ onStockSelect }) => {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [hasSearched, setHasSearched] = useState(false);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
     
     setIsLoading(true);
     setError('');
+    setHasSearched(true);
     
     try {
       const response = await axios.get(API_ENDPOINTS.search(encodeURIComponent(searchQuery)));
@@ -60,7 +62,10 @@ const StockSearch: React.FC<StockSearchProps> = ({ onStockSelect }) => {
               placeholder="Enter stock symbol or company name (e.g., AAPL, Apple)..."
               className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setHasSearched(false); // Reset search state when user types
+              }}
               onKeyPress={handleKeyPress}
             />
           </div>
@@ -135,7 +140,7 @@ const StockSearch: React.FC<StockSearchProps> = ({ onStockSelect }) => {
         </div>
       )}
       
-      {searchQuery && searchResults.length === 0 && !isLoading && !error && (
+      {hasSearched && searchResults.length === 0 && !isLoading && !error && (
         <div className="text-center py-8 text-gray-600">
           No stocks found for "{searchQuery}". Try a different search term.
         </div>
@@ -146,6 +151,12 @@ const StockSearch: React.FC<StockSearchProps> = ({ onStockSelect }) => {
           <Search className="w-16 h-16 mx-auto mb-4 text-gray-300" />
           <h3 className="text-lg font-medium mb-2">Search for Stocks</h3>
           <p>Enter a stock symbol (like AAPL) or company name (like Apple) to get started.</p>
+        </div>
+      )}
+
+      {searchQuery && !hasSearched && (
+        <div className="text-center py-8 text-gray-500">
+          <p>Press Enter or click Search to find "{searchQuery}"</p>
         </div>
       )}
     </div>
