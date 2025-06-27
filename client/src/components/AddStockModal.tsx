@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Plus, TrendingUp, AlertCircle } from 'lucide-react';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../config';
 
 interface AddStockModalProps {
   isOpen: boolean;
@@ -35,7 +36,7 @@ const AddStockModal: React.FC<AddStockModalProps> = ({ isOpen, onClose, onAddSto
     setError('');
 
     try {
-      const response = await axios.post('http://localhost:5000/api/add-stock', {
+      const response = await axios.post(API_ENDPOINTS.addStock, {
         symbol: stockSymbol.toUpperCase()
       });
 

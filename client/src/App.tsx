@@ -6,6 +6,7 @@ import StockSearch from './components/StockSearch';
 import StockDetail from './components/StockDetail';
 import AddStockModal from './components/AddStockModal';
 import { TrendingUp, TrendingDown, Activity, Clock, AlertCircle, Plus } from 'lucide-react';
+import { API_ENDPOINTS } from './config';
 
 interface Prediction {
   prediction: 'UP' | 'DOWN' | 'ERROR';
@@ -51,13 +52,13 @@ function App() {
       try {
         const timestamp = new Date().getTime();
         const [predictionRes, statsRes] = await Promise.all([
-          axios.get(`http://localhost:5000/api/predict?_=${timestamp}`, {
+          axios.get(`${API_ENDPOINTS.predict}?_=${timestamp}`, {
             headers: {
               'Cache-Control': 'no-cache',
               'Pragma': 'no-cache'
             }
           }),
-          axios.get(`http://localhost:5000/api/stats?_=${timestamp}`, {
+          axios.get(`${API_ENDPOINTS.stats}?_=${timestamp}`, {
             headers: {
               'Cache-Control': 'no-cache',
               'Pragma': 'no-cache'

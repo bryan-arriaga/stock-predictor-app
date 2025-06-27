@@ -11,7 +11,8 @@ import time
 # Constants
 STOCKS = ['AAPL', 'MSFT', 'NVDA', 'GOOGL', 'AMZN']
 FEATURES = ['Open', 'High', 'Low', 'Close', 'Volume']
-CACHE_FILE = 'cache.json'
+# Use /tmp directory for Vercel serverless functions
+CACHE_FILE = '/tmp/cache.json' if os.environ.get('VERCEL') else 'cache.json'
 
 def get_stock_data(symbol, days=365):
     try:

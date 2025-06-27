@@ -13,8 +13,8 @@ import time
 import requests
 from dotenv import load_dotenv
 
-# Load environment variables from .env file in root directory
-load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
+# Load environment variables - Vercel automatically loads them
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
@@ -53,10 +53,8 @@ def save_cache(data):
     except Exception as e:
         print(f"Error saving cache: {str(e)}")
 
-# Initialize scheduler
-scheduler = BackgroundScheduler()
-scheduler.add_job(func=lambda: update_predictions() and save_cache(load_cache()), trigger='cron', hour=8, minute=0, id='update_predictions')
-scheduler.start()
+# Note: Background scheduler doesn't work in Vercel serverless functions
+# Predictions will update on-demand when cache is stale
 
 @app.route('/api/predict')
 def get_predictions():
@@ -450,10 +448,10 @@ def update_predictions():
         'performance': {'accuracy': 0.75, 'total_predictions': len(STOCKS)}
     }
 
+# For Vercel deployment, we need to expose the app instance
+# The if __name__ == '__main__' block won't execute in serverless functions
+app_instance = app
+
 if __name__ == '__main__':
-    # Run initial prediction if cache is empty or if it's past 8 AM
-    current_hour = datetime.now().hour
-    if (not os.path.exists(CACHE_FILE)) or (current_hour >= 8 and load_cache()["last_updated"] is None):
-        print("Running initial predictions...")
-        update_predictions()
+    # Local development only
     app.run(debug=True, port=5000) 

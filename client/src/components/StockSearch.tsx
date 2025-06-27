@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Search, TrendingUp, TrendingDown, DollarSign, Calendar } from 'lucide-react';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../config';
 
 interface SearchResult {
   symbol: string;
@@ -29,7 +30,7 @@ const StockSearch: React.FC<StockSearchProps> = ({ onStockSelect }) => {
     setError('');
     
     try {
-      const response = await axios.get(`http://localhost:5000/api/search/${encodeURIComponent(searchQuery)}`);
+      const response = await axios.get(API_ENDPOINTS.search(encodeURIComponent(searchQuery)));
       setSearchResults(response.data.results || []);
     } catch (err: any) {
       console.error('Search error:', err);

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, TrendingUp, TrendingDown, DollarSign, BarChart3, Calendar, Globe, Users, Building2 } from 'lucide-react';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../config';
 
 interface StockDetailProps {
   symbol: string;
@@ -41,8 +42,8 @@ const StockDetail: React.FC<StockDetailProps> = ({ symbol, onBack }) => {
       try {
         // Fetch both stock summary and chart data
         const [summaryRes, chartRes] = await Promise.all([
-          axios.get(`http://localhost:5000/api/summary/${symbol}`),
-          axios.get(`http://localhost:5000/api/stock-data/${symbol}`)
+          axios.get(API_ENDPOINTS.summary(symbol)),
+          axios.get(API_ENDPOINTS.stockData(symbol))
         ]);
 
         // Create stock data object

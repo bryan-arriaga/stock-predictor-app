@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_ENDPOINTS } from '../config';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import * as Tabs from '@radix-ui/react-tabs';
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
@@ -39,7 +40,7 @@ const StockCard: React.FC<StockCardProps> = ({ symbol, prediction }) => {
   const fetchStockData = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/stock-data/${symbol}`);
+      const response = await fetch(API_ENDPOINTS.stockData(symbol));
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to fetch stock data');
@@ -60,7 +61,7 @@ const StockCard: React.FC<StockCardProps> = ({ symbol, prediction }) => {
 
   const fetchDailySummary = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/summary/${symbol}`);
+      const response = await fetch(API_ENDPOINTS.summary(symbol));
       if (response.ok) {
         const summary = await response.json();
         setDailySummary(summary);
