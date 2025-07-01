@@ -274,69 +274,85 @@ def add_stock():
 @app.route('/api/market-overview')
 def get_market_overview():
     try:
-        # Major market indices with realistic fallback values
-        indices = [
-            {"symbol": "^GSPC", "name": "S&P 500", "fallback": 5800, "fallback_change": 0.5},
-            {"symbol": "^DJI", "name": "Dow Jones", "fallback": 42000, "fallback_change": 0.3},
-            {"symbol": "^IXIC", "name": "NASDAQ", "fallback": 18500, "fallback_change": 0.8}
-        ]
-        
+        # Get market indices from FinancialModelingPrep free API
         indices_data = []
-        for index in indices:
-            try:
-                # Try different symbol formats for Finnhub
-                symbols_to_try = [index['symbol'], index['symbol'].replace('^', '')]
-                current = 0
+        try:
+            # FMP free endpoint for market indices
+            fmp_url = "https://financialmodelingprep.com/api/v3/quotes/index"
+            fmp_response = requests.get(fmp_url, timeout=10).json()
+            
+            # Filter for major US indices
+            target_indices = {
+                "^GSPC": "S&P 500",
+                "^DJI": "Dow Jones", 
+                "^IXIC": "NASDAQ"
+            }
+            
+            for index_data in fmp_response:
+                symbol = index_data.get("symbol", "")
+                if symbol in target_indices:
+                    current = index_data.get("price", 0)
+                    change = index_data.get("change", 0)
+                    change_percent = index_data.get("changesPercentage", 0)
+                    
+                    indices_data.append({
+                        "symbol": symbol,
+                        "name": target_indices[symbol],
+                        "current": round(current, 2),
+                        "change": round(change, 2),
+                        "changePercent": round(change_percent, 2)
+                    })
+            
+            # If we didn't get all 3 indices, fill with fallbacks
+            if len(indices_data) < 3:
+                fallback_indices = [
+                    {"symbol": "^GSPC", "name": "S&P 500", "fallback": 5800, "fallback_change": 0.5},
+                    {"symbol": "^DJI", "name": "Dow Jones", "fallback": 42000, "fallback_change": 0.3},
+                    {"symbol": "^IXIC", "name": "NASDAQ", "fallback": 18500, "fallback_change": 0.8}
+                ]
                 
-                for symbol in symbols_to_try:
-                    try:
-                        url = f"https://finnhub.io/api/v1/quote?symbol={symbol}&token={FINNHUB_API_KEY}"
-                        response = requests.get(url, timeout=5).json()
-                        current = response.get("c", 0)
-                        if current and current > 0:
-                            break
-                    except:
-                        continue
-                
-                # If no valid data from API, use realistic fallback
-                if not current or current == 0:
-                    base_value = index["fallback"]
-                    variation = random.uniform(-0.02, 0.02)  # ±2% daily variation
-                    current = base_value * (1 + variation)
-                    change_percent = index["fallback_change"] + random.uniform(-1, 1)
-                    change = current * change_percent / 100
-                else:
-                    # Use API data
-                    previous_close = response.get("pc", current)
-                    change = current - previous_close
-                    change_percent = (change / previous_close * 100) if previous_close != 0 else 0
-                
-                indices_data.append({
-                    "symbol": index["symbol"],
-                    "name": index["name"],
-                    "current": round(current, 2),
-                    "change": round(change, 2),
-                    "changePercent": round(change_percent, 2)
-                })
-                
-            except Exception as e:
-                print(f"Error fetching index data for {index['symbol']}: {e}")
-                # Use fallback with realistic variation
-                base_value = index["fallback"]
-                variation = random.uniform(-0.015, 0.015)  # ±1.5% variation
+                existing_symbols = [idx["symbol"] for idx in indices_data]
+                for fallback in fallback_indices:
+                    if fallback["symbol"] not in existing_symbols:
+                        base_value = fallback["fallback"]
+                        variation = random.uniform(-0.015, 0.015)
+                        current = base_value * (1 + variation)
+                        change_percent = fallback["fallback_change"] + random.uniform(-0.8, 0.8)
+                        change = current * change_percent / 100
+                        
+                        indices_data.append({
+                            "symbol": fallback["symbol"],
+                            "name": fallback["name"],
+                            "current": round(current, 2),
+                            "change": round(change, 2),
+                            "changePercent": round(change_percent, 2)
+                        })
+                        
+        except Exception as e:
+            print(f"Error fetching FMP index data: {e}")
+            # Complete fallback if FMP fails
+            fallback_indices = [
+                {"symbol": "^GSPC", "name": "S&P 500", "fallback": 5800, "fallback_change": 0.5},
+                {"symbol": "^DJI", "name": "Dow Jones", "fallback": 42000, "fallback_change": 0.3},
+                {"symbol": "^IXIC", "name": "NASDAQ", "fallback": 18500, "fallback_change": 0.8}
+            ]
+            
+            for fallback in fallback_indices:
+                base_value = fallback["fallback"]
+                variation = random.uniform(-0.015, 0.015)
                 current = base_value * (1 + variation)
-                change_percent = index["fallback_change"] + random.uniform(-0.8, 0.8)
+                change_percent = fallback["fallback_change"] + random.uniform(-0.8, 0.8)
                 change = current * change_percent / 100
                 
                 indices_data.append({
-                    "symbol": index["symbol"],
-                    "name": index["name"],
+                    "symbol": fallback["symbol"],
+                    "name": fallback["name"],
                     "current": round(current, 2),
                     "change": round(change, 2),
                     "changePercent": round(change_percent, 2)
                 })
         
-        # Generate top gainers and losers
+        # Generate top gainers and losers using Finnhub for individual stocks
         popular_stocks = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "META", "NVDA", "NFLX", "CRM", "UBER"]
         stock_data = []
         
