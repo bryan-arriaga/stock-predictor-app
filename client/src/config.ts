@@ -6,6 +6,7 @@ export const API_BASE_URL = isProduction
   : 'http://localhost:5000';
 
 export const API_ENDPOINTS = {
+  base: API_BASE_URL,
   predict: `${API_BASE_URL}/api/predict`,
   stats: `${API_BASE_URL}/api/stats`,
   stockData: (symbol: string) => `${API_BASE_URL}/api/stock-data/${symbol}`,

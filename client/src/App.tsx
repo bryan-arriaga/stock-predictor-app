@@ -4,6 +4,7 @@ import StockCard from './components/StockCard';
 import TabNavigation from './components/TabNavigation';
 import StockSearch from './components/StockSearch';
 import StockDetail from './components/StockDetail';
+import MarketOverview from './components/MarketOverview';
 import AddStockModal from './components/AddStockModal';
 import { TrendingUp, TrendingDown, Activity, Clock, AlertCircle, Plus } from 'lucide-react';
 import { API_ENDPOINTS } from './config';
@@ -39,7 +40,7 @@ function App() {
   const [performance, setPerformance] = useState<Performance | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'predictor' | 'search'>('predictor');
+  const [activeTab, setActiveTab] = useState<'predictor' | 'search' | 'overview'>('predictor');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [customStocks, setCustomStocks] = useState<string[]>([]);
   const [selectedStock, setSelectedStock] = useState<string | null>(null);
@@ -251,6 +252,8 @@ function App() {
               </div>
             </footer>
           </>
+        ) : activeTab === 'overview' ? (
+          <MarketOverview />
         ) : selectedStock ? (
           <StockDetail 
             symbol={selectedStock} 

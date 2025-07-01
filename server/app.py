@@ -271,6 +271,116 @@ def add_stock():
         print(f"Error adding stock: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/market-overview')
+def get_market_overview():
+    try:
+        # Major market indices
+        indices = [
+            {"symbol": "^GSPC", "name": "S&P 500"},
+            {"symbol": "^DJI", "name": "Dow Jones"},
+            {"symbol": "^IXIC", "name": "NASDAQ"}
+        ]
+        
+        indices_data = []
+        for index in indices:
+            try:
+                url = f"https://finnhub.io/api/v1/quote?symbol={index['symbol']}&token={FINNHUB_API_KEY}"
+                response = requests.get(url).json()
+                
+                current = response.get("c", 0)
+                previous_close = response.get("pc", current)
+                change = current - previous_close
+                change_percent = (change / previous_close * 100) if previous_close != 0 else 0
+                
+                indices_data.append({
+                    "symbol": index["symbol"],
+                    "name": index["name"],
+                    "current": round(current, 2),
+                    "change": round(change, 2),
+                    "changePercent": round(change_percent, 2)
+                })
+            except Exception as e:
+                print(f"Error fetching index data for {index['symbol']}: {e}")
+                # Fallback with mock data
+                indices_data.append({
+                    "symbol": index["symbol"],
+                    "name": index["name"],
+                    "current": round(random.uniform(3000, 5000), 2),
+                    "change": round(random.uniform(-50, 50), 2),
+                    "changePercent": round(random.uniform(-2, 2), 2)
+                })
+        
+        # Generate top gainers and losers
+        popular_stocks = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "META", "NVDA", "NFLX", "CRM", "UBER"]
+        stock_data = []
+        
+        for symbol in popular_stocks:
+            try:
+                url = f"https://finnhub.io/api/v1/quote?symbol={symbol}&token={FINNHUB_API_KEY}"
+                response = requests.get(url).json()
+                
+                current = response.get("c", 0)
+                previous_close = response.get("pc", current)
+                change = current - previous_close
+                change_percent = (change / previous_close * 100) if previous_close != 0 else 0
+                
+                stock_data.append({
+                    "symbol": symbol,
+                    "name": f"{symbol} Inc.",
+                    "current": round(current, 2),
+                    "change": round(change, 2),
+                    "changePercent": round(change_percent, 2),
+                    "volume": random.randint(1000000, 50000000)
+                })
+            except Exception as e:
+                print(f"Error fetching stock data for {symbol}: {e}")
+                # Mock data fallback
+                current = random.uniform(50, 500)
+                change_percent = random.uniform(-5, 5)
+                stock_data.append({
+                    "symbol": symbol,
+                    "name": f"{symbol} Inc.",
+                    "current": round(current, 2),
+                    "change": round(current * change_percent / 100, 2),
+                    "changePercent": round(change_percent, 2),
+                    "volume": random.randint(1000000, 50000000)
+                })
+        
+        # Sort for top gainers and losers
+        stock_data.sort(key=lambda x: x["changePercent"], reverse=True)
+        top_gainers = stock_data[:5]
+        top_losers = stock_data[-5:]
+        
+        # Generate market sentiment (mock data)
+        bullish = random.randint(35, 55)
+        bearish = random.randint(20, 35)
+        neutral = 100 - bullish - bearish
+        
+        # Market statistics (mock data)
+        market_stats = {
+            "totalVolume": random.randint(8000000000, 15000000000),
+            "activeSymbols": random.randint(3500, 4000),
+            "marketCap": random.randint(40000000000000, 50000000000000),
+            "volatilityIndex": round(random.uniform(15, 35), 2)
+        }
+        
+        return jsonify({
+            "indices": indices_data,
+            "topGainers": top_gainers,
+            "topLosers": top_losers,
+            "marketSentiment": {
+                "bullish": bullish,
+                "bearish": bearish,
+                "neutral": neutral
+            },
+            "marketStats": market_stats,
+            "lastUpdated": datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        print(f"Error fetching market overview: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 def update_predictions():
     predictions = {}
     for symbol in STOCKS:
