@@ -274,41 +274,55 @@ def add_stock():
 @app.route('/api/market-overview')
 def get_market_overview():
     try:
-        # Get market indices from FinancialModelingPrep free API
+        # Get market indices from Yahoo Finance API (more accurate real-time data)
         indices_data = []
         try:
-            # FMP free endpoint for market indices
-            fmp_url = "https://financialmodelingprep.com/api/v3/quotes/index"
-            fmp_response = requests.get(fmp_url, timeout=10).json()
+            # Yahoo Finance API for major market indices
+            target_indices = [
+                {"symbol": "%5EGSPC", "display_symbol": "^GSPC", "name": "S&P 500"},
+                {"symbol": "%5EDJI", "display_symbol": "^DJI", "name": "Dow Jones"},
+                {"symbol": "%5EIXIC", "display_symbol": "^IXIC", "name": "NASDAQ"}
+            ]
             
-            # Filter for major US indices
-            target_indices = {
-                "^GSPC": "S&P 500",
-                "^DJI": "Dow Jones", 
-                "^IXIC": "NASDAQ"
-            }
-            
-            for index_data in fmp_response:
-                symbol = index_data.get("symbol", "")
-                if symbol in target_indices:
-                    current = index_data.get("price", 0)
-                    change = index_data.get("change", 0)
-                    change_percent = index_data.get("changesPercentage", 0)
+            for index_info in target_indices:
+                try:
+                    # Yahoo Finance query API
+                    yahoo_url = f"https://query1.finance.yahoo.com/v8/finance/chart/{index_info['symbol']}"
+                    params = {
+                        "interval": "1d",
+                        "range": "2d"
+                    }
                     
-                    indices_data.append({
-                        "symbol": symbol,
-                        "name": target_indices[symbol],
-                        "current": round(current, 2),
-                        "change": round(change, 2),
-                        "changePercent": round(change_percent, 2)
-                    })
+                    yahoo_response = requests.get(yahoo_url, params=params, timeout=10).json()
+                    
+                    if yahoo_response.get("chart", {}).get("result"):
+                        result = yahoo_response["chart"]["result"][0]
+                        meta = result.get("meta", {})
+                        
+                        current = meta.get("regularMarketPrice", 0)
+                        previous_close = meta.get("previousClose", current)
+                        
+                        if current and previous_close:
+                            change = current - previous_close
+                            change_percent = (change / previous_close * 100)
+                            
+                            indices_data.append({
+                                "symbol": index_info["display_symbol"],
+                                "name": index_info["name"],
+                                "current": round(current, 2),
+                                "change": round(change, 2),
+                                "changePercent": round(change_percent, 2)
+                            })
+                except Exception as e:
+                    print(f"Error fetching Yahoo data for {index_info['name']}: {e}")
+                    continue
             
             # If we didn't get all 3 indices, fill with fallbacks
             if len(indices_data) < 3:
                 fallback_indices = [
-                    {"symbol": "^GSPC", "name": "S&P 500", "fallback": 5800, "fallback_change": 0.5},
-                    {"symbol": "^DJI", "name": "Dow Jones", "fallback": 42000, "fallback_change": 0.3},
-                    {"symbol": "^IXIC", "name": "NASDAQ", "fallback": 18500, "fallback_change": 0.8}
+                    {"symbol": "^GSPC", "name": "S&P 500", "fallback": 6200, "fallback_change": 0.5},
+                    {"symbol": "^DJI", "name": "Dow Jones", "fallback": 44000, "fallback_change": 0.3},
+                    {"symbol": "^IXIC", "name": "NASDAQ", "fallback": 19500, "fallback_change": 0.8}
                 ]
                 
                 existing_symbols = [idx["symbol"] for idx in indices_data]
@@ -329,12 +343,12 @@ def get_market_overview():
                         })
                         
         except Exception as e:
-            print(f"Error fetching FMP index data: {e}")
-            # Complete fallback if FMP fails
+            print(f"Error fetching Yahoo Finance index data: {e}")
+            # Complete fallback if Yahoo Finance fails
             fallback_indices = [
-                {"symbol": "^GSPC", "name": "S&P 500", "fallback": 5800, "fallback_change": 0.5},
-                {"symbol": "^DJI", "name": "Dow Jones", "fallback": 42000, "fallback_change": 0.3},
-                {"symbol": "^IXIC", "name": "NASDAQ", "fallback": 18500, "fallback_change": 0.8}
+                {"symbol": "^GSPC", "name": "S&P 500", "fallback": 6200, "fallback_change": 0.5},
+                {"symbol": "^DJI", "name": "Dow Jones", "fallback": 44000, "fallback_change": 0.3},
+                {"symbol": "^IXIC", "name": "NASDAQ", "fallback": 19500, "fallback_change": 0.8}
             ]
             
             for fallback in fallback_indices:
