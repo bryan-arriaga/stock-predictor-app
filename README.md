@@ -1,6 +1,7 @@
 # Stock Market Predictor
 
 A full-stack application that predicts daily stock market movements using machine learning.
+
 visit this website here : https://stock-predictor-app-chi.vercel.app/
 ## Features
 
